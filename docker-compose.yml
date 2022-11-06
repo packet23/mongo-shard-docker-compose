@@ -1,110 +1,384 @@
 version: '3'
 services:
 
-  ## Config Servers
-  config01:
-    image: "mongo:${MONGO_TAG:-latest}"
-    command: mongod --port 27017 --configsvr --replSet configserver
+  ## Config Replica Set
+  config01a:
+    image: "${DOCKER_ORG:-library}/${DOCKER_PREFIX:-}mongo:${DOCKER_TAG:-4.4}"
+    command: ["--port", "27019", "--configsvr", "--replSet", "config"]
+    init: true
     restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 1G
+        reservations:
+          cpus: "0.25"
+          memory: 500M
     healthcheck:
-      test: ["CMD", "mongo", "--quiet", "--eval", "db.runCommand(\"ping\").ok"]
+      test: ["CMD", "mongo", "--port", "27019", "--quiet", "--eval", "quit(db.runCommand(\"ping\").ok == 1 ? 0 : 1)"]
+    networks:
+      - repsets
     volumes:
-      - ./scripts:/scripts
-      - ./data/config01:/data/configdb
-  config02:
-    image: "mongo:${MONGO_TAG:-latest}"
-    command: mongod --port 27017 --configsvr --replSet configserver
+      - config01adb:/data/db
+      - config01acfg:/data/configdb
+  config01b:
+    image: "${DOCKER_ORG:-library}/${DOCKER_PREFIX:-}mongo:${DOCKER_TAG:-4.4}"
+    command: ["--port", "27019", "--configsvr", "--replSet", "config"]
+    init: true
     restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 1G
+        reservations:
+          cpus: "0.25"
+          memory: 500M
     healthcheck:
-      test: ["CMD", "mongo", "--quiet", "--eval", "db.runCommand(\"ping\").ok"]
+      test: ["CMD", "mongo", "--port", "27019", "--quiet", "--eval", "quit(db.runCommand(\"ping\").ok == 1 ? 0 : 1)"]
+    networks:
+      - repsets
     volumes:
-      - ./scripts:/scripts
-      - ./data/config02:/data/configdb
-  config03:
-    image: "mongo:${MONGO_TAG:-latest}"
-    command: mongod --port 27017 --configsvr --replSet configserver
+      - config01bdb:/data/db
+      - config01bcfg:/data/configdb
+  config01c:
+    image: "${DOCKER_ORG:-library}/${DOCKER_PREFIX:-}mongo:${DOCKER_TAG:-4.4}"
+    command: ["--port", "27019", "--configsvr", "--replSet", "config"]
+    init: true
     restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 1G
+        reservations:
+          cpus: "0.25"
+          memory: 500M
     healthcheck:
-      test: ["CMD", "mongo", "--quiet", "--eval", "db.runCommand(\"ping\").ok"]
+      test: ["CMD", "mongo", "--port", "27019", "--quiet", "--eval", "quit(db.runCommand(\"ping\").ok == 1 ? 0 : 1)"]
+    networks:
+      - repsets
     volumes:
-      - ./scripts:/scripts
-      - ./data/config03:/data/configdb
+      - config01cdb:/data/db
+      - config01ccfg:/data/configdb
+  initconfig:
+    image: "${DOCKER_ORG:-library}/${DOCKER_PREFIX:-}mongo:${DOCKER_TAG:-4.4}"
+    command: ["/scripts/init-config.sh"]
+    init: true
+    restart: on-failure
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 1G
+        reservations:
+          cpus: "0.25"
+          memory: 500M
+    networks:
+      - repsets
+    volumes:
+      - ./scripts:/scripts:ro
+      - type: tmpfs
+        target: /data/db
+        read_only: true
+      - type: tmpfs
+        target: /data/configdb
+        read_only: true
+    depends_on:
+      config01a:
+        condition: service_healthy
+      config01b:
+        condition: service_healthy
+      config01c:
+        condition: service_healthy
 
-  ## Shards
+  ## Shard 01 - Primary-Secondary-Secondary for read/write concern for majority
   shard01a:
-    image: "mongo:${MONGO_TAG:-latest}"
-    command: mongod --port 27018 --shardsvr --replSet shard01
+    image: "${DOCKER_ORG:-library}/${DOCKER_PREFIX:-}mongo:${DOCKER_TAG:-4.4}"
+    command: ["--port", "27018", "--shardsvr", "--replSet", "shard01"]
+    init: true
     restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 1G
+        reservations:
+          cpus: "0.25"
+          memory: 500M
     healthcheck:
-      test: ["CMD", "mongo", "--port", "27018", "--quiet", "--eval", "db.runCommand(\"ping\").ok"]
+      test: ["CMD", "mongo", "--port", "27018", "--quiet", "--eval", "quit(db.runCommand(\"ping\").ok == 1 ? 0 : 1)"]
+    networks:
+      - repsets
     volumes:
-      - ./scripts:/scripts
-      - ./data/shard01a:/data/db
+      - shard01adb:/data/db
+      - shard01acfg:/data/configdb
   shard01b:
-    image: "mongo:${MONGO_TAG:-latest}"
-    command: mongod --port 27018 --shardsvr --replSet shard01
+    image: "${DOCKER_ORG:-library}/${DOCKER_PREFIX:-}mongo:${DOCKER_TAG:-4.4}"
+    command: ["--port", "27018", "--shardsvr", "--replSet", "shard01"]
+    init: true
     restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 1G
+        reservations:
+          cpus: "0.25"
+          memory: 500M
     healthcheck:
-      test: ["CMD", "mongo", "--port", "27018", "--quiet", "--eval", "db.runCommand(\"ping\").ok"]
+      test: ["CMD", "mongo", "--port", "27018", "--quiet", "--eval", "quit(db.runCommand(\"ping\").ok == 1 ? 0 : 1)"]
+    networks:
+      - repsets
     volumes:
-      - ./scripts:/scripts
-      - ./data/shard01b:/data/db
+      - shard01bdb:/data/db
+      - shard01bcfg:/data/configdb
+  shard01c:
+    image: "${DOCKER_ORG:-library}/${DOCKER_PREFIX:-}mongo:${DOCKER_TAG:-4.4}"
+    command: ["--port", "27018", "--shardsvr", "--replSet", "shard01"]
+    init: true
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 1G
+        reservations:
+          cpus: "0.25"
+          memory: 500M
+    healthcheck:
+      test: ["CMD", "mongo", "--port", "27018", "--quiet", "--eval", "quit(db.runCommand(\"ping\").ok == 1 ? 0 : 1)"]
+    networks:
+      - repsets
+    volumes:
+      - shard01cdb:/data/db
+      - shard01ccfg:/data/configdb
+  initshard01:
+    image: "${DOCKER_ORG:-library}/${DOCKER_PREFIX:-}mongo:${DOCKER_TAG:-4.4}"
+    command: ["/scripts/init-shard01.sh"]
+    init: true
+    restart: on-failure
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 1G
+        reservations:
+          cpus: "0.25"
+          memory: 500M
+    networks:
+      - repsets
+    volumes:
+      - ./scripts:/scripts:ro
+      - type: tmpfs
+        target: /data/db
+        read_only: true
+      - type: tmpfs
+        target: /data/configdb
+        read_only: true
+    depends_on:
+      shard01a:
+        condition: service_healthy
+      shard01b:
+        condition: service_healthy
+      shard01c:
+        condition: service_healthy
+
+  ## Shard 02 - Primary-Secondary-Secondary for read/write concern for majority
   shard02a:
-    image: "mongo:${MONGO_TAG:-latest}"
-    command: mongod --port 27019 --shardsvr --replSet shard02
+    image: "${DOCKER_ORG:-library}/${DOCKER_PREFIX:-}mongo:${DOCKER_TAG:-4.4}"
+    command: ["--port", "27018", "--shardsvr", "--replSet", "shard02"]
+    init: true
     restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 1G
+        reservations:
+          cpus: "0.25"
+          memory: 500M
     healthcheck:
-      test: ["CMD", "mongo", "--port", "27019", "--quiet", "--eval", "db.runCommand(\"ping\").ok"]
+      test: ["CMD", "mongo", "--port", "27018", "--quiet", "--eval", "quit(db.runCommand(\"ping\").ok == 1 ? 0 : 1)"]
+    networks:
+      - repsets
     volumes:
-      - ./scripts:/scripts
-      - ./data/shard02a:/data/db
+      - shard02adb:/data/db
+      - shard02acfg:/data/configdb
   shard02b:
-    image: "mongo:${MONGO_TAG:-latest}"
-    command: mongod --port 27019 --shardsvr --replSet shard02
+    image: "${DOCKER_ORG:-library}/${DOCKER_PREFIX:-}mongo:${DOCKER_TAG:-4.4}"
+    command: ["--port", "27018", "--shardsvr", "--replSet", "shard02"]
+    init: true
     restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 1G
+        reservations:
+          cpus: "0.25"
+          memory: 500M
     healthcheck:
-      test: ["CMD", "mongo", "--port", "27019", "--quiet", "--eval", "db.runCommand(\"ping\").ok"]
+      test: ["CMD", "mongo", "--port", "27018", "--quiet", "--eval", "quit(db.runCommand(\"ping\").ok == 1 ? 0 : 1)"]
+    networks:
+      - repsets
     volumes:
-      - ./scripts:/scripts
-      - ./data/shard02b:/data/db
-  shard03a:
-    image: "mongo:${MONGO_TAG:-latest}"
-    command: mongod --port 27020 --shardsvr --replSet shard03
+      - shard02bdb:/data/db
+      - shard02bcfg:/data/configdb
+  shard02c:
+    image: "${DOCKER_ORG:-library}/${DOCKER_PREFIX:-}mongo:${DOCKER_TAG:-4.4}"
+    command: ["--port", "27018", "--shardsvr", "--replSet", "shard02"]
+    init: true
     restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 1G
+        reservations:
+          cpus: "0.25"
+          memory: 500M
     healthcheck:
-      test: ["CMD", "mongo", "--port", "27020", "--quiet", "--eval", "db.runCommand(\"ping\").ok"]
+      test: ["CMD", "mongo", "--port", "27018", "--quiet", "--eval", "quit(db.runCommand(\"ping\").ok == 1 ? 0 : 1)"]
+    networks:
+      - repsets
     volumes:
-      - ./scripts:/scripts
-      - ./data/shard03a:/data/db
-  shard03b:
-    image: "mongo:${MONGO_TAG:-latest}"
-    command: mongod --port 27020 --shardsvr --replSet shard03
-    restart: always
-    healthcheck:
-      test: ["CMD", "mongo", "--port", "27020", "--quiet", "--eval", "db.runCommand(\"ping\").ok"]
+      - shard02cdb:/data/db
+      - shard02ccfg:/data/configdb
+  initshard02:
+    image: "${DOCKER_ORG:-library}/${DOCKER_PREFIX:-}mongo:${DOCKER_TAG:-4.4}"
+    command: ["/scripts/init-shard02.sh"]
+    init: true
+    restart: on-failure
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 1G
+        reservations:
+          cpus: "0.25"
+          memory: 500M
+    networks:
+      - repsets
     volumes:
-      - ./scripts:/scripts
-      - ./data/shard03b:/data/db
+      - ./scripts:/scripts:ro
+      - type: tmpfs
+        target: /data/db
+        read_only: true
+      - type: tmpfs
+        target: /data/configdb
+        read_only: true
+    depends_on:
+      shard02a:
+        condition: service_healthy
+      shard02b:
+        condition: service_healthy
+      shard02c:
+        condition: service_healthy
 
   ## Router
   router:
-    image: "mongo:${MONGO_TAG:-latest}"
-    command: mongos --configdb configserver/config01:27017,config02:27017,config03:27017 --bind_ip_all
+    image: "${DOCKER_ORG:-library}/${DOCKER_PREFIX:-}mongo:${DOCKER_TAG:-4.4}"
+    command: ["mongos", "--configdb", "config/config01a,config01b,config01c", "--bind_ip_all"]
+    init: true
     restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 1G
+        reservations:
+          cpus: "0.25"
+          memory: 500M
     healthcheck:
-      test: ["CMD", "mongo", "--quiet", "--eval", "db.runCommand(\"ping\").ok"]
+      test: ["CMD", "mongo", "--quiet", "--eval", "quit(db.runCommand(\"ping\").ok == 1 ? 0 : 1)"]
     ports:
       - "27017:27017"
+    networks:
+      - repsets
+      - router
     volumes:
-      - ./scripts:/scripts
-      - ./data/router:/data/db
+      - routerdb:/data/db
+      - routercfg:/data/configdb
     depends_on:
-      - config01
-      - config02
-      - config03
-      - shard01a
-      - shard01b
-      - shard02a
-      - shard02b
-      - shard03a
-      - shard03b
+      initconfig:
+        condition: service_completed_successfully
+      initshard01:
+        condition: service_completed_successfully
+      initshard02:
+        condition: service_completed_successfully
+      config01a:
+        condition: service_healthy
+      config01b:
+        condition: service_healthy
+      config01c:
+        condition: service_healthy
+      shard01a:
+        condition: service_healthy
+      shard01b:
+        condition: service_healthy
+      shard01c:
+        condition: service_healthy
+      shard02a:
+        condition: service_healthy
+      shard02b:
+        condition: service_healthy
+      shard02c:
+        condition: service_healthy
+  initrouter:
+    image: "${DOCKER_ORG:-library}/${DOCKER_PREFIX:-}mongo:${DOCKER_TAG:-4.4}"
+    command: ["/scripts/init-router.sh"]
+    init: true
+    restart: on-failure
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 1G
+        reservations:
+          cpus: "0.25"
+          memory: 500M
+    networks:
+      - router
+    volumes:
+      - ./scripts:/scripts:ro
+      - type: tmpfs
+        target: /data/db
+        read_only: true
+      - type: tmpfs
+        target: /data/configdb
+        read_only: true
+    depends_on:
+      router:
+        condition: service_healthy
+
+
+## Persistent volumes
+volumes:
+  routerdb:
+  routercfg:
+  config01adb:
+  config01acfg:
+  config01bdb:
+  config01bcfg:
+  config01cdb:
+  config01ccfg:
+  shard01adb:
+  shard01acfg:
+  shard01bdb:
+  shard01bcfg:
+  shard01cdb:
+  shard01ccfg:
+  shard02adb:
+  shard02acfg:
+  shard02bdb:
+  shard02bcfg:
+  shard02cdb:
+  shard02ccfg:
+
+
+## Networks
+networks:
+  repsets:
+  router:
