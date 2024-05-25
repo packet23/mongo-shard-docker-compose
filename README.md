@@ -39,42 +39,67 @@ mongo-shard-docker-compose-initrouter-1   "docker-entrypoint.s…"   initrouter 
 
 3. Verify the status of the sharded cluster:
 ```
-docker compose exec router mongo --eval 'sh.status()'
+docker compose exec router mongosh --eval 'sh.status()'
 ```
 Expected output:
 ```
-MongoDB shell version v4.4.17
-connecting to: mongodb://127.0.0.1:27017/?compressors=disabled&gssapiServiceName=mongodb
-Implicit session: session { "id" : UUID("5a8d865e-9efe-4cce-b50e-0009ee82f990") }
-MongoDB server version: 4.4.17
---- Sharding Status --- 
-  sharding version: {
-  	"_id" : 1,
-  	"minCompatibleVersion" : 5,
-  	"currentVersion" : 6,
-  	"clusterId" : ObjectId("63680ded948f01c03c98bf49")
+shardingVersion
+{ _id: 1, clusterId: ObjectId('665232c297ddc0c9ddc98c50') }
+---
+shards
+[
+  {
+    _id: 'shard01',
+    host: 'shard01/shard01a:27018,shard01b:27018,shard01c:27018',
+    state: 1,
+    topologyTime: Timestamp({ t: 1716663010, i: 2 })
+  },
+  {
+    _id: 'shard02',
+    host: 'shard02/shard02a:27018,shard02b:27018,shard02c:27018',
+    state: 1,
+    topologyTime: Timestamp({ t: 1716663011, i: 2 })
   }
-  shards:
-        {  "_id" : "shard01",  "host" : "shard01/shard01a:27018,shard01b:27018,shard01c:27018",  "state" : 1 }
-        {  "_id" : "shard02",  "host" : "shard02/shard02a:27018,shard02b:27018,shard02c:27018",  "state" : 1 }
-  active mongoses:
-        "4.4.17" : 1
-  autosplit:
-        Currently enabled: yes
-  balancer:
-        Currently enabled:  yes
-        Currently running:  no
-        Failed balancer rounds in last 5 attempts:  0
-        Migration Results for the last 24 hours: 
-                No recent migrations
-  databases:
-        {  "_id" : "config",  "primary" : "config",  "partitioned" : true }
+]
+---
+active mongoses
+[ { '7.0.9': 1 } ]
+---
+autosplit
+{ 'Currently enabled': 'yes' }
+---
+balancer
+{
+  'Currently enabled': 'yes',
+  'Failed balancer rounds in last 5 attempts': 0,
+  'Currently running': 'no',
+  'Migration Results for the last 24 hours': 'No recent migrations'
+}
+---
+databases
+[
+  {
+    database: { _id: 'config', primary: 'config', partitioned: true },
+    collections: {
+      'config.system.sessions': {
+        shardKey: { _id: 1 },
+        unique: false,
+        balancing: true,
+        chunkMetadata: [ { shard: 'shard01', nChunks: 1 } ],
+        chunks: [
+          { min: { _id: MinKey() }, max: { _id: MaxKey() }, 'on shard': 'shard01', 'last modified': Timestamp({ t: 1, i: 0 }) }
+        ],
+        tags: []
+      }
+    }
+  }
+]
 ```
 
 ## Accessing the Mongo Shell
 Is as simple as:
 ```
-docker compose exec router mongo
+docker compose exec router mongosh
 ```
 
 ## Resetting the Cluster

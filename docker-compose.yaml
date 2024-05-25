@@ -2,7 +2,7 @@ services:
 
   ## Config Replica Set
   config01a:
-    image: "${DOCKER_ORG:-library}/${DOCKER_PREFIX:-}mongo:${DOCKER_TAG:-4.4}"
+    image: "${DOCKER_ORG:-library}/${DOCKER_PREFIX:-}mongo:${DOCKER_TAG:-7.0}"
     command: ["--port", "27019", "--configsvr", "--replSet", "config"]
     init: true
     restart: always
@@ -15,14 +15,14 @@ services:
           cpus: "0.25"
           memory: 500M
     healthcheck:
-      test: ["CMD", "mongo", "--port", "27019", "--quiet", "--eval", "quit(db.runCommand(\"ping\").ok == 1 ? 0 : 1)"]
+      test: ["CMD", "mongosh", "--port", "27019", "--quiet", "--eval", "quit(db.runCommand(\"ping\").ok == 1 ? 0 : 1)"]
     networks:
       - repsets
     volumes:
       - config01adb:/data/db
       - config01acfg:/data/configdb
   config01b:
-    image: "${DOCKER_ORG:-library}/${DOCKER_PREFIX:-}mongo:${DOCKER_TAG:-4.4}"
+    image: "${DOCKER_ORG:-library}/${DOCKER_PREFIX:-}mongo:${DOCKER_TAG:-7.0}"
     command: ["--port", "27019", "--configsvr", "--replSet", "config"]
     init: true
     restart: always
@@ -35,14 +35,14 @@ services:
           cpus: "0.25"
           memory: 500M
     healthcheck:
-      test: ["CMD", "mongo", "--port", "27019", "--quiet", "--eval", "quit(db.runCommand(\"ping\").ok == 1 ? 0 : 1)"]
+      test: ["CMD", "mongosh", "--port", "27019", "--quiet", "--eval", "quit(db.runCommand(\"ping\").ok == 1 ? 0 : 1)"]
     networks:
       - repsets
     volumes:
       - config01bdb:/data/db
       - config01bcfg:/data/configdb
   config01c:
-    image: "${DOCKER_ORG:-library}/${DOCKER_PREFIX:-}mongo:${DOCKER_TAG:-4.4}"
+    image: "${DOCKER_ORG:-library}/${DOCKER_PREFIX:-}mongo:${DOCKER_TAG:-7.0}"
     command: ["--port", "27019", "--configsvr", "--replSet", "config"]
     init: true
     restart: always
@@ -55,14 +55,14 @@ services:
           cpus: "0.25"
           memory: 500M
     healthcheck:
-      test: ["CMD", "mongo", "--port", "27019", "--quiet", "--eval", "quit(db.runCommand(\"ping\").ok == 1 ? 0 : 1)"]
+      test: ["CMD", "mongosh", "--port", "27019", "--quiet", "--eval", "quit(db.runCommand(\"ping\").ok == 1 ? 0 : 1)"]
     networks:
       - repsets
     volumes:
       - config01cdb:/data/db
       - config01ccfg:/data/configdb
   initconfig:
-    image: "${DOCKER_ORG:-library}/${DOCKER_PREFIX:-}mongo:${DOCKER_TAG:-4.4}"
+    image: "${DOCKER_ORG:-library}/${DOCKER_PREFIX:-}mongo:${DOCKER_TAG:-7.0}"
     command: ["/scripts/init-config.sh"]
     init: true
     restart: on-failure
@@ -94,7 +94,7 @@ services:
 
   ## Shard 01 - Primary-Secondary-Secondary for read/write concern for majority
   shard01a:
-    image: "${DOCKER_ORG:-library}/${DOCKER_PREFIX:-}mongo:${DOCKER_TAG:-4.4}"
+    image: "${DOCKER_ORG:-library}/${DOCKER_PREFIX:-}mongo:${DOCKER_TAG:-7.0}"
     command: ["--port", "27018", "--shardsvr", "--replSet", "shard01"]
     init: true
     restart: always
@@ -107,14 +107,14 @@ services:
           cpus: "0.25"
           memory: 500M
     healthcheck:
-      test: ["CMD", "mongo", "--port", "27018", "--quiet", "--eval", "quit(db.runCommand(\"ping\").ok == 1 ? 0 : 1)"]
+      test: ["CMD", "mongosh", "--port", "27018", "--quiet", "--eval", "quit(db.runCommand(\"ping\").ok == 1 ? 0 : 1)"]
     networks:
       - repsets
     volumes:
       - shard01adb:/data/db
       - shard01acfg:/data/configdb
   shard01b:
-    image: "${DOCKER_ORG:-library}/${DOCKER_PREFIX:-}mongo:${DOCKER_TAG:-4.4}"
+    image: "${DOCKER_ORG:-library}/${DOCKER_PREFIX:-}mongo:${DOCKER_TAG:-7.0}"
     command: ["--port", "27018", "--shardsvr", "--replSet", "shard01"]
     init: true
     restart: always
@@ -127,14 +127,14 @@ services:
           cpus: "0.25"
           memory: 500M
     healthcheck:
-      test: ["CMD", "mongo", "--port", "27018", "--quiet", "--eval", "quit(db.runCommand(\"ping\").ok == 1 ? 0 : 1)"]
+      test: ["CMD", "mongosh", "--port", "27018", "--quiet", "--eval", "quit(db.runCommand(\"ping\").ok == 1 ? 0 : 1)"]
     networks:
       - repsets
     volumes:
       - shard01bdb:/data/db
       - shard01bcfg:/data/configdb
   shard01c:
-    image: "${DOCKER_ORG:-library}/${DOCKER_PREFIX:-}mongo:${DOCKER_TAG:-4.4}"
+    image: "${DOCKER_ORG:-library}/${DOCKER_PREFIX:-}mongo:${DOCKER_TAG:-7.0}"
     command: ["--port", "27018", "--shardsvr", "--replSet", "shard01"]
     init: true
     restart: always
@@ -147,14 +147,14 @@ services:
           cpus: "0.25"
           memory: 500M
     healthcheck:
-      test: ["CMD", "mongo", "--port", "27018", "--quiet", "--eval", "quit(db.runCommand(\"ping\").ok == 1 ? 0 : 1)"]
+      test: ["CMD", "mongosh", "--port", "27018", "--quiet", "--eval", "quit(db.runCommand(\"ping\").ok == 1 ? 0 : 1)"]
     networks:
       - repsets
     volumes:
       - shard01cdb:/data/db
       - shard01ccfg:/data/configdb
   initshard01:
-    image: "${DOCKER_ORG:-library}/${DOCKER_PREFIX:-}mongo:${DOCKER_TAG:-4.4}"
+    image: "${DOCKER_ORG:-library}/${DOCKER_PREFIX:-}mongo:${DOCKER_TAG:-7.0}"
     command: ["/scripts/init-shard01.sh"]
     init: true
     restart: on-failure
@@ -186,7 +186,7 @@ services:
 
   ## Shard 02 - Primary-Secondary-Secondary for read/write concern for majority
   shard02a:
-    image: "${DOCKER_ORG:-library}/${DOCKER_PREFIX:-}mongo:${DOCKER_TAG:-4.4}"
+    image: "${DOCKER_ORG:-library}/${DOCKER_PREFIX:-}mongo:${DOCKER_TAG:-7.0}"
     command: ["--port", "27018", "--shardsvr", "--replSet", "shard02"]
     init: true
     restart: always
@@ -199,14 +199,14 @@ services:
           cpus: "0.25"
           memory: 500M
     healthcheck:
-      test: ["CMD", "mongo", "--port", "27018", "--quiet", "--eval", "quit(db.runCommand(\"ping\").ok == 1 ? 0 : 1)"]
+      test: ["CMD", "mongosh", "--port", "27018", "--quiet", "--eval", "quit(db.runCommand(\"ping\").ok == 1 ? 0 : 1)"]
     networks:
       - repsets
     volumes:
       - shard02adb:/data/db
       - shard02acfg:/data/configdb
   shard02b:
-    image: "${DOCKER_ORG:-library}/${DOCKER_PREFIX:-}mongo:${DOCKER_TAG:-4.4}"
+    image: "${DOCKER_ORG:-library}/${DOCKER_PREFIX:-}mongo:${DOCKER_TAG:-7.0}"
     command: ["--port", "27018", "--shardsvr", "--replSet", "shard02"]
     init: true
     restart: always
@@ -219,14 +219,14 @@ services:
           cpus: "0.25"
           memory: 500M
     healthcheck:
-      test: ["CMD", "mongo", "--port", "27018", "--quiet", "--eval", "quit(db.runCommand(\"ping\").ok == 1 ? 0 : 1)"]
+      test: ["CMD", "mongosh", "--port", "27018", "--quiet", "--eval", "quit(db.runCommand(\"ping\").ok == 1 ? 0 : 1)"]
     networks:
       - repsets
     volumes:
       - shard02bdb:/data/db
       - shard02bcfg:/data/configdb
   shard02c:
-    image: "${DOCKER_ORG:-library}/${DOCKER_PREFIX:-}mongo:${DOCKER_TAG:-4.4}"
+    image: "${DOCKER_ORG:-library}/${DOCKER_PREFIX:-}mongo:${DOCKER_TAG:-7.0}"
     command: ["--port", "27018", "--shardsvr", "--replSet", "shard02"]
     init: true
     restart: always
@@ -239,14 +239,14 @@ services:
           cpus: "0.25"
           memory: 500M
     healthcheck:
-      test: ["CMD", "mongo", "--port", "27018", "--quiet", "--eval", "quit(db.runCommand(\"ping\").ok == 1 ? 0 : 1)"]
+      test: ["CMD", "mongosh", "--port", "27018", "--quiet", "--eval", "quit(db.runCommand(\"ping\").ok == 1 ? 0 : 1)"]
     networks:
       - repsets
     volumes:
       - shard02cdb:/data/db
       - shard02ccfg:/data/configdb
   initshard02:
-    image: "${DOCKER_ORG:-library}/${DOCKER_PREFIX:-}mongo:${DOCKER_TAG:-4.4}"
+    image: "${DOCKER_ORG:-library}/${DOCKER_PREFIX:-}mongo:${DOCKER_TAG:-7.0}"
     command: ["/scripts/init-shard02.sh"]
     init: true
     restart: on-failure
@@ -278,7 +278,7 @@ services:
 
   ## Router
   router:
-    image: "${DOCKER_ORG:-library}/${DOCKER_PREFIX:-}mongo:${DOCKER_TAG:-4.4}"
+    image: "${DOCKER_ORG:-library}/${DOCKER_PREFIX:-}mongo:${DOCKER_TAG:-7.0}"
     command: ["mongos", "--configdb", "config/config01a,config01b,config01c", "--bind_ip_all"]
     init: true
     restart: always
@@ -291,7 +291,7 @@ services:
           cpus: "0.25"
           memory: 500M
     healthcheck:
-      test: ["CMD", "mongo", "--quiet", "--eval", "quit(db.runCommand(\"ping\").ok == 1 ? 0 : 1)"]
+      test: ["CMD", "mongosh", "--quiet", "--eval", "quit(db.runCommand(\"ping\").ok == 1 ? 0 : 1)"]
     ports:
       - "27017:27017"
     networks:
@@ -326,7 +326,7 @@ services:
       shard02c:
         condition: service_healthy
   initrouter:
-    image: "${DOCKER_ORG:-library}/${DOCKER_PREFIX:-}mongo:${DOCKER_TAG:-4.4}"
+    image: "${DOCKER_ORG:-library}/${DOCKER_PREFIX:-}mongo:${DOCKER_TAG:-7.0}"
     command: ["/scripts/init-router.sh"]
     init: true
     restart: on-failure
