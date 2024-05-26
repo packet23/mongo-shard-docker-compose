@@ -293,7 +293,7 @@ services:
     healthcheck:
       test: ["CMD", "mongosh", "--quiet", "--eval", "quit(db.runCommand(\"ping\").ok == 1 ? 0 : 1)"]
     ports:
-      - "27017:27017"
+      - "127.0.0.1:27017:27017"
     networks:
       - repsets
       - router
@@ -352,6 +352,25 @@ services:
       router:
         condition: service_healthy
 
+  ## Mongo Express WebUI
+  mongo-express:
+    image: "${ME_ORG:-library}/${ME_PREFIX:-}mongo-express:${ME_TAG:-1.0}"
+    restart: always
+    networks:
+      - router
+    ports:
+      - "127.0.0.1:8081:8081"
+    depends_on:
+      router:
+        condition: service_healthy
+      initrouter:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "wget -O /dev/null -q http://mongo-express:8081/status || exit 1"]
+    environment:
+      ME_CONFIG_MONGODB_URL: mongodb://router:27017/
+      ME_CONFIG_BASICAUTH: false
+      ME_CONFIG_MONGODB_ENABLE_ADMIN: true
 
 ## Persistent volumes
 volumes:
